@@ -29,15 +29,15 @@ adr-0021-openobserve.sh
 failed=0
 total=0
 for s in $SCRIPTS; do
-  total=$((total + 1))
-  bash "$SCRIPT_DIR/$s" || failed=$((failed + 1))
+	total=$((total + 1))
+	bash "$SCRIPT_DIR/$s" || failed=$((failed + 1))
 done
 
 echo
 if [ "$failed" -eq 0 ]; then
-  echo "all $total ADR verifiers passed"
-  exit 0
+	echo "all $total ADR verifiers passed"
+	exit 0
 else
-  echo "$failed of $total ADR verifiers failed"
-  exit 1
+	echo "$failed of $total ADR verifiers failed"
+	exit 1
 fi
