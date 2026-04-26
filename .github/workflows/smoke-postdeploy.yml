@@ -1,0 +1,25 @@
+name: Smoke (post-deploy)
+
+on:
+  workflow_dispatch:
+    inputs:
+      binary_url:
+        description: 'URL of the deployed ts-bun binary artifact'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.2.21'
+      - name: Download deployed artifact
+        run: mkdir -p dist && curl -fsSL "${{ inputs.binary_url }}" -o dist/ts-bun && chmod +x dist/ts-bun
+      - run: bun run test:smoke

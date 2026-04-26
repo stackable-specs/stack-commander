@@ -1,0 +1,68 @@
+{
+  "name": "typescript-bun-stack",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.2.21",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "bin": {
+    "ts-bun": "./src/cli.ts"
+  },
+  "scripts": {
+    "cli": "bun run src/cli.ts",
+    "build": "mkdir -p dist && bun build --compile src/cli.ts --outfile dist/ts-bun",
+    "test": "bun test src tests/property",
+    "test:ci": "bun test --coverage src tests/property",
+    "test:integration": "bun test tests/integration",
+    "test:smoke": "bun test tests/smoke",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --check .",
+    "format:write": "prettier --write .",
+    "docs": "typedoc",
+    "docs:check": "typedoc --emit none",
+    "sbom": "cdxgen --output reports/sbom.cdx.json --spec-version 1.6 --profile research .",
+    "license:check": "license-checker-rseidelsohn --summary --production --onlyAllow 'MIT;ISC;Apache-2.0;BSD-2-Clause;BSD-3-Clause;0BSD;Python-2.0;BlueOak-1.0.0'",
+    "deps:unused": "knip",
+    "commitlint": "commitlint",
+    "prek:install": "./scripts/install-prek.sh",
+    "prek:run": "prek run --all-files --show-diff-on-failure",
+    "verify": "bash docs/verify/verify-all.sh",
+    "verify:0001": "bash docs/verify/adr-0001-typescript.sh",
+    "verify:0002": "bash docs/verify/adr-0002-bun.sh",
+    "verify:0003": "bash docs/verify/adr-0003-commander.sh",
+    "verify:0004": "bash docs/verify/adr-0004-tdd.sh"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "1.9.1",
+    "@opentelemetry/api-logs": "0.215.0",
+    "@opentelemetry/auto-instrumentations-node": "0.73.0",
+    "@opentelemetry/exporter-logs-otlp-http": "0.215.0",
+    "@opentelemetry/exporter-metrics-otlp-http": "0.215.0",
+    "@opentelemetry/exporter-trace-otlp-http": "0.215.0",
+    "@opentelemetry/sdk-logs": "0.215.0",
+    "@opentelemetry/sdk-metrics": "2.7.0",
+    "@opentelemetry/sdk-node": "0.215.0",
+    "commander": "12.1.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "20.5.2",
+    "@commitlint/config-conventional": "20.5.0",
+    "@stryker-mutator/core": "8.6.0",
+    "@cyclonedx/cdxgen": "12.2.1",
+    "@types/bun": "1.1.14",
+    "@typescript-eslint/eslint-plugin": "8.15.0",
+    "@typescript-eslint/parser": "8.15.0",
+    "eslint": "9.14.0",
+    "eslint-plugin-tsdoc": "0.5.2",
+    "fast-check": "4.7.0",
+    "knip": "6.7.0",
+    "license-checker-rseidelsohn": "4.4.2",
+    "prettier": "3.3.3",
+    "typedoc": "0.28.19",
+    "typescript": "5.6.3",
+    "typescript-eslint": "8.15.0"
+  }
+}

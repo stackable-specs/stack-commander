@@ -1,0 +1,69 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "config:best-practices",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(chore)",
+    ":dependencyDashboard"
+  ],
+  "timezone": "America/New_York",
+  "schedule": ["after 8am and before 6pm every weekday"],
+  "labels": ["dependencies"],
+  "rangeStrategy": "pin",
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 2,
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "Renovate dependency dashboard",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 5am on monday"]
+  },
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security", "dependencies"],
+    "schedule": ["at any time"],
+    "prCreation": "immediate",
+    "automerge": false
+  },
+  "osvVulnerabilityAlerts": true,
+  "configMigration": true,
+  "packageRules": [
+    {
+      "matchManagers": ["npm"],
+      "matchDepTypes": ["dependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "npm runtime (non-major)",
+      "schedule": ["after 8am and before 6pm on monday"]
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "npm dev tooling (non-major)",
+      "schedule": ["after 8am and before 6pm on monday"]
+    },
+    {
+      "matchPackageNames": ["/^@opentelemetry\\//"],
+      "groupName": "opentelemetry"
+    },
+    {
+      "matchManagers": ["dockerfile", "docker-compose"],
+      "pinDigests": true,
+      "groupName": "container base images"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "pinDigests": true,
+      "groupName": "github actions"
+    },
+    {
+      "description": "Auto-merge dev-only patch updates, pins, digests, and lockfile maintenance.",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["patch", "pin", "digest", "lockFileMaintenance"],
+      "automerge": true,
+      "platformAutomerge": true,
+      "automergeStrategy": "squash"
+    }
+  ]
+}

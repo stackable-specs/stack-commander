@@ -1,0 +1,60 @@
+name: typescript-bun
+
+services:
+  openobserve:
+    image: openobserve/openobserve@sha256:add11d31d3711075b762b84e557c5ab9a2400585056d8bfcda96ef773e8b3253 # openobserve/openobserve:v0.80.0
+    environment:
+      ZO_ROOT_USER_EMAIL: ${ZO_ROOT_USER_EMAIL:-root@example.com}
+      ZO_ROOT_USER_PASSWORD: ${ZO_ROOT_USER_PASSWORD:-changeme}
+      ZO_DATA_DIR: /data
+    volumes:
+      - openobserve_data:/data
+    ports:
+      - '127.0.0.1:${OPENOBSERVE_HOST_PORT:-5180}:5080'
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '5'
+
+  cli:
+    image: typescript-bun-stack:dev
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    profiles: ['cli']
+    command: ['greet', '--name', 'Compose']
+    environment:
+      APP_ENVIRONMENT: ${APP_ENVIRONMENT:-local}
+      IMAGE_TAG: ${IMAGE_TAG:-dev}
+      OTEL_ENABLED: ${OTEL_ENABLED:-true}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://openobserve:5080/api/default/
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-http/protobuf}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-typescript-bun-cli}
+      OTEL_RESOURCE_ATTRIBUTES: service.version=${IMAGE_TAG:-dev},deployment.environment=${APP_ENVIRONMENT:-local}
+      OTEL_EXPORTER_OTLP_HEADERS_FILE: /run/secrets/openobserve_token
+    depends_on:
+      - openobserve
+    secrets:
+      - openobserve_token
+    restart: 'no'
+    read_only: true
+    user: '65532:65532'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '5'
+
+volumes:
+  openobserve_data:
+
+secrets:
+  openobserve_token:
+    file: ./secrets/openobserve_token

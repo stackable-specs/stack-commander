@@ -1,0 +1,31 @@
+# prek owns git-hook execution for this repo (ADR-0012).
+[[repos]]
+repo = "https://github.com/pre-commit/pre-commit-hooks"
+rev = "v6.0.0"
+hooks = [
+    { id = "trailing-whitespace", stages = ["pre-commit"] },
+    { id = "end-of-file-fixer", stages = ["pre-commit"] },
+    { id = "check-yaml", stages = ["pre-commit"], args = ["--allow-multiple-documents"] },
+    { id = "check-json", stages = ["pre-commit"] },
+    { id = "check-toml", stages = ["pre-commit"] },
+    { id = "check-merge-conflict", stages = ["pre-commit"] },
+    { id = "check-added-large-files", stages = ["pre-commit"], args = ["--maxkb=512"] },
+]
+
+[[repos]]
+repo = "https://github.com/gitleaks/gitleaks"
+rev = "v8.30.1"
+hooks = [{ id = "gitleaks", stages = ["pre-commit"] }]
+
+[[repos]]
+repo = "local"
+hooks = [
+    { id = "trunk-check", name = "trunk check", entry = "./scripts/trunk-check-hook.sh", language = "system", pass_filenames = false, stages = ["pre-commit"] },
+    { id = "trunk-fmt", name = "trunk fmt --no-fix", entry = "./scripts/trunk-fmt-hook.sh", language = "system", pass_filenames = false, stages = ["pre-commit"] },
+    { id = "bun-lint", name = "bun run lint", entry = "bun run lint", language = "system", pass_filenames = false, stages = ["pre-push"] },
+    { id = "bun-typecheck", name = "bun run typecheck", entry = "bun run typecheck", language = "system", pass_filenames = false, stages = ["pre-push"] },
+    { id = "bun-test", name = "bun run test:ci", entry = "bun run test:ci", language = "system", pass_filenames = false, stages = ["pre-push"] },
+    { id = "bun-build", name = "bun run build", entry = "bun run build", language = "system", pass_filenames = false, stages = ["pre-push"] },
+    { id = "typedoc", name = "bun run docs:check", entry = "bun run docs:check", language = "system", pass_filenames = false, stages = ["pre-push"] },
+    { id = "commitlint", name = "commitlint", entry = "bunx --bun commitlint --edit", language = "system", stages = ["commit-msg"] },
+]

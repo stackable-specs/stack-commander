@@ -1,0 +1,19 @@
+# Default ownership
+*                                       @typescript-bun-stack/maintainers
+
+# Dependency and release surface
+/package.json                           @typescript-bun-stack/dependency-policy
+/bun.lock                               @typescript-bun-stack/dependency-policy
+/Dockerfile                             @typescript-bun-stack/dependency-policy @typescript-bun-stack/platform
+/compose.yaml                           @typescript-bun-stack/platform
+/compose.override.yaml                  @typescript-bun-stack/platform
+/renovate.json                          @typescript-bun-stack/dependency-policy
+
+# Decision and behavior records
+/docs/adr/                              @typescript-bun-stack/architects
+/docs/bdr/                              @typescript-bun-stack/product
+/docs/specs/                            @typescript-bun-stack/architects
+
+# Security-sensitive automation
+/.github/workflows/                     @typescript-bun-stack/security
+/.trunk/                                @typescript-bun-stack/security

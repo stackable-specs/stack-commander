@@ -1,0 +1,5 @@
+services:
+  cli:
+    command: ['greet', '--name', 'Override']
+    environment:
+      APP_ENVIRONMENT: local-debug

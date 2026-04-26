@@ -1,0 +1,13 @@
+.git
+.github
+node_modules
+reports
+docs/adr
+docs/bdr
+docs/specs
+docs-site
+tests
+secrets
+.trunk
+.env
+*.log
