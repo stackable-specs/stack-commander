@@ -56,7 +56,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: trunk-io/trunk-action/setup@v1
       - name: Add trunk to PATH
-        run: echo "$HOME/.local/share/trunk/bin" >> "$GITHUB_PATH"
+        run: echo "$(dirname "$TRUNK_PATH")" >> "$GITHUB_PATH"
       - run: bun install --frozen-lockfile
       - name: Install pinned prek
         run: cargo install --locked --git https://github.com/j178/prek --tag v0.3.10 prek
