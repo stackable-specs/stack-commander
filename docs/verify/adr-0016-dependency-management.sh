@@ -9,17 +9,17 @@ require_tools jq
 cd "$STACK_ROOT"
 
 for f in package.json bun.lock .npmrc .github/CODEOWNERS renovate.json; do
-  if [ -f "$f" ]; then
-    check_pass "$f present"
-  else
-    check_fail "$f present" "missing"
-  fi
+	if [ -f "$f" ]; then
+		check_pass "$f present"
+	else
+		check_fail "$f present" "missing"
+	fi
 done
 
 if grep -q '^registry=https://registry.npmjs.org/' .npmrc 2>/dev/null; then
-  check_pass ".npmrc pins the npm registry"
+	check_pass ".npmrc pins the npm registry"
 else
-  check_fail ".npmrc pins the npm registry"
+	check_fail ".npmrc pins the npm registry"
 fi
 
 loose="$(jq -r '
@@ -30,16 +30,16 @@ loose="$(jq -r '
   | "\(.key)=\(.value)"
 ' package.json)"
 if [ -z "$loose" ]; then
-  check_pass "all declared dependencies are exact-pinned"
+	check_pass "all declared dependencies are exact-pinned"
 else
-  check_fail "all declared dependencies are exact-pinned" "$(echo "$loose" | head -3 | tr '\n' ' | ')"
+	check_fail "all declared dependencies are exact-pinned" "$(echo "$loose" | head -3 | tr '\n' ' | ')"
 fi
 
 if grep -q '/package.json' .github/CODEOWNERS 2>/dev/null &&
-   grep -q '/bun.lock' .github/CODEOWNERS 2>/dev/null; then
-  check_pass "CODEOWNERS gates dependency surface"
+	grep -q '/bun.lock' .github/CODEOWNERS 2>/dev/null; then
+	check_pass "CODEOWNERS gates dependency surface"
 else
-  check_fail "CODEOWNERS gates dependency surface"
+	check_fail "CODEOWNERS gates dependency surface"
 fi
 
 report_and_exit "ADR 0016 — Dependency Management"
