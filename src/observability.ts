@@ -1,16 +1,26 @@
-import { context, trace, type Attributes, SpanStatusCode } from '@opentelemetry/api';
+import {
+  context,
+  metrics,
+  trace,
+  type Attributes,
+  type Counter,
+  SpanStatusCode,
+} from '@opentelemetry/api';
 import { logs, SeverityNumber } from '@opentelemetry/api-logs';
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { resourceFromAttributes } from '@opentelemetry/resources';
 import { LoggerProvider, BatchLogRecordProcessor } from '@opentelemetry/sdk-logs';
-import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
-import { NodeSDK } from '@opentelemetry/sdk-node';
+import { MeterProvider, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
+import { SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 
-let sdk: NodeSDK | null = null;
+let tracerProvider: NodeTracerProvider | null = null;
+let meterProvider: MeterProvider | null = null;
 let loggerProvider: LoggerProvider | null = null;
 let started = false;
+let commandCounter: Counter | null = null;
 
 function otelEnabled(): boolean {
   return process.env.OTEL_ENABLED === 'true' || process.env.APP_OTEL_ENABLED === 'true';
@@ -36,6 +46,26 @@ async function resolveHeaders(): Promise<Record<string, string>> {
     }, {});
 }
 
+function resolveResourceAttributes(): Attributes {
+  const attributes: Attributes = {
+    'service.name': process.env.OTEL_SERVICE_NAME ?? 'typescript-bun-cli',
+  };
+
+  const raw = process.env.OTEL_RESOURCE_ATTRIBUTES;
+  if (raw === undefined || raw.length === 0) {
+    return attributes;
+  }
+
+  for (const pair of raw.split(',')) {
+    const [key, ...rest] = pair.split('=');
+    if (key !== undefined && rest.length > 0) {
+      attributes[key.trim()] = rest.join('=').trim();
+    }
+  }
+
+  return attributes;
+}
+
 /**
  * Initialize OpenTelemetry exporters once for the process.
  *
@@ -54,24 +84,40 @@ export async function initializeObservability(): Promise<boolean> {
   }
 
   const headers = await resolveHeaders();
+  const resource = resourceFromAttributes(resolveResourceAttributes());
   const traceExporter = new OTLPTraceExporter({ headers });
   const metricExporter = new OTLPMetricExporter({ headers });
   const logExporter = new OTLPLogExporter({ headers });
 
+  tracerProvider = new NodeTracerProvider({
+    resource,
+    spanProcessors: [new SimpleSpanProcessor(traceExporter)],
+  });
+  tracerProvider.register();
+
+  meterProvider = new MeterProvider({
+    resource,
+    readers: [
+      new PeriodicExportingMetricReader({
+        exporter: metricExporter,
+      }),
+    ],
+  });
+  metrics.setGlobalMeterProvider(meterProvider);
+
   loggerProvider = new LoggerProvider({
+    resource,
     processors: [new BatchLogRecordProcessor(logExporter)],
+    meterProvider,
   });
   logs.setGlobalLoggerProvider(loggerProvider);
 
-  sdk = new NodeSDK({
-    traceExporter,
-    metricReader: new PeriodicExportingMetricReader({
-      exporter: metricExporter,
-    }),
-    instrumentations: [getNodeAutoInstrumentations()],
-  });
-
-  sdk.start();
+  commandCounter = meterProvider
+    .getMeter('typescript-bun-cli')
+    .createCounter('cli.command.invocations', {
+      description: 'Number of CLI command invocations completed by command and status.',
+      unit: '1',
+    });
   started = true;
   return true;
 }
@@ -107,6 +153,32 @@ export function emitCommandLog(message: string, attributes: Attributes = {}): vo
 }
 
 /**
+ * Record a low-cardinality command completion metric.
+ *
+ * @public
+ * @category Observability
+ * @param command - CLI command name.
+ * @param status - Completion status for the command.
+ * @param attributes - Additional low-cardinality attributes.
+ * @returns Nothing.
+ * @example
+ * ```ts
+ * recordCommandMetric('greet', 'ok');
+ * ```
+ */
+export function recordCommandMetric(
+  command: string,
+  status: 'ok' | 'error',
+  attributes: Attributes = {},
+): void {
+  commandCounter?.add(1, {
+    ...attributes,
+    'cli.command': command,
+    'cli.status': status,
+  });
+}
+
+/**
  * Execute an operation inside an active span.
  *
  * @public
@@ -127,7 +199,8 @@ export async function runWithSpan<T>(
   fn: () => Promise<T> | T,
 ): Promise<T> {
   const tracer = trace.getTracer('typescript-bun-cli');
-  return await tracer.startActiveSpan(name, { attributes }, async (span) => {
+  const span = tracer.startSpan(name, { attributes });
+  return await context.with(trace.setSpan(context.active(), span), async () => {
     try {
       const result = await fn();
       return result;
@@ -158,8 +231,14 @@ export async function shutdownObservability(): Promise<void> {
     return;
   }
 
-  await Promise.all([sdk?.shutdown(), loggerProvider?.shutdown()]);
-  sdk = null;
+  await Promise.all([
+    tracerProvider?.shutdown(),
+    meterProvider?.shutdown(),
+    loggerProvider?.shutdown(),
+  ]);
+  tracerProvider = null;
+  meterProvider = null;
   loggerProvider = null;
+  commandCounter = null;
   started = false;
 }

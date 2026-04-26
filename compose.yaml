@@ -45,6 +45,8 @@ services:
       - openobserve_token
     restart: 'no'
     read_only: true
+    volumes:
+      - cli_tmp:/tmp
     user: '65532:65532'
     logging:
       driver: json-file
@@ -53,6 +55,7 @@ services:
         max-file: '5'
 
 volumes:
+  cli_tmp:
   openobserve_data:
 
 secrets:

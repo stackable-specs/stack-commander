@@ -11,9 +11,11 @@ cd "$STACK_ROOT"
 for pkg in \
   '@opentelemetry/api' \
   '@opentelemetry/api-logs' \
-  '@opentelemetry/sdk-node' \
+  '@opentelemetry/resources' \
   '@opentelemetry/sdk-logs' \
   '@opentelemetry/sdk-metrics' \
+  '@opentelemetry/sdk-trace-base' \
+  '@opentelemetry/sdk-trace-node' \
   '@opentelemetry/exporter-trace-otlp-http' \
   '@opentelemetry/exporter-metrics-otlp-http' \
   '@opentelemetry/exporter-logs-otlp-http'; do
@@ -32,7 +34,7 @@ else
   report_and_exit "ADR 0020 — OpenTelemetry"
 fi
 
-for needle in 'NodeSDK' 'OTLPTraceExporter' 'OTLPMetricExporter' 'OTLPLogExporter' 'BatchLogRecordProcessor' 'SpanStatusCode.ERROR'; do
+for needle in 'NodeTracerProvider' 'MeterProvider' 'LoggerProvider' 'OTLPTraceExporter' 'OTLPMetricExporter' 'OTLPLogExporter' 'SimpleSpanProcessor' 'BatchLogRecordProcessor' 'SpanStatusCode.ERROR'; do
   if grep -q "$needle" src/observability.ts 2>/dev/null; then
     check_pass "observability module references $needle"
   else

@@ -5,6 +5,7 @@ import { greet } from './commands/greet.ts';
 import {
   emitCommandLog,
   initializeObservability,
+  recordCommandMetric,
   runWithSpan,
   shutdownObservability,
 } from './observability.ts';
@@ -79,6 +80,9 @@ export function createProgram(options: CreateProgramOptions = {}): Command {
 
           emitCommandLog('greet command completed', {
             'cli.command': 'greet',
+            'cli.output.file': opts.output ?? 'stdout',
+          });
+          recordCommandMetric('greet', 'ok', {
             'cli.output.file': opts.output ?? 'stdout',
           });
         },
